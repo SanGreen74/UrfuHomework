@@ -6,12 +6,12 @@ namespace HomeWork.Structures
 {
     public class Trie
     {
-        public Node Root;
+        public TrieNode Root;
 
         public void Add(string key)
         {
             if (Root == null)
-                Root = new Node();
+                Root = new TrieNode();
 
             var node = Root;
             foreach (var letter in key)
@@ -57,7 +57,7 @@ namespace HomeWork.Structures
         {
             if (!Exists(key))
                 return;
-            var route = new Stack<Node>();
+            var route = new Stack<TrieNode>();
             var node = Root;
             foreach (var letter in key)
             {
@@ -75,9 +75,9 @@ namespace HomeWork.Structures
             }
         }
 
-        private void Traverse(ICollection<string> list, Node startNode)
+        private void Traverse(ICollection<string> list, TrieNode startTrieNode)
         {
-            foreach (var startNodeEdge in startNode.Edges)
+            foreach (var startNodeEdge in startTrieNode.Edges)
             {
                 if (startNodeEdge.Value.IsTerminal)
                     list.Add(startNodeEdge.Value.Content);
@@ -86,13 +86,13 @@ namespace HomeWork.Structures
         }
     }
 
-    public class Node
+    public class TrieNode
     {
-        public IDictionary<char, Node> Edges { get; }
+        public IDictionary<char, TrieNode> Edges { get; }
         public string Content;
         public bool IsTerminal;
 
-        public Node Next(char key)
+        public TrieNode Next(char key)
         {
             return Edges[key];
         }
@@ -106,15 +106,15 @@ namespace HomeWork.Structures
         {
             if (Edges.ContainsKey(key))
                 throw new ArgumentException("//todo");
-            Edges[key] = new Node
+            Edges[key] = new TrieNode
             {
                 Content = Content + key,
             };
         }
 
-        public Node()
+        public TrieNode()
         {
-            Edges = new Dictionary<char, Node>();
+            Edges = new Dictionary<char, TrieNode>();
         }
     }
 }

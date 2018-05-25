@@ -2,19 +2,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HomeWork.Structures
 {
     public class HashTable<TKey, TValue>
     {
         private Container<TKey, TValue> _container;
-        private uint countOfElemenets;
+        private uint _countOfElemenets;
 
-        public HashTable(int capacity)
+        public HashTable()
         {
-            _container = new Container<TKey, TValue>(capacity);
+            _container = new Container<TKey, TValue>(17);
         }
 
         public void Add(TKey key, TValue value)
@@ -23,8 +21,8 @@ namespace HomeWork.Structures
                 throw new ArgumentException($"Argument with key {key} was added earlier");
             var indexInContainer = GetIndexInContainer(key);
             _container[indexInContainer].Add(Pair<TKey, TValue>.Create(key, value));
-            countOfElemenets++;
-            if (countOfElemenets / _container.Size >= 2)
+            _countOfElemenets++;
+            if (_countOfElemenets / _container.Size >= 2)
                 Rebuild();
         }
 
@@ -37,12 +35,13 @@ namespace HomeWork.Structures
         public TValue Get(TKey key)
         {
             var listOfElements = _container[GetIndexInContainer(key)];
-            foreach (var bucket in listOfElements)
+            foreach (var pair in listOfElements)
             {
-                if (bucket.Key.Equals(key))
-                    return bucket.Value;
+                if (pair.Key.Equals(key))
+                    return pair.Value;
             }
-            return default(TValue);
+
+            throw new ArgumentException($"Element with key {key} not found", nameof(key));
         }
 
         public void Remove(TKey key)
@@ -53,7 +52,7 @@ namespace HomeWork.Structures
                 if (element.Key.Equals(key))
                 {
                     list.Remove(element);
-                    countOfElemenets--;
+                    _countOfElemenets--;
                     break;
                 }
             }
@@ -64,7 +63,7 @@ namespace HomeWork.Structures
             return Math.Abs(key.GetHashCode()) % _container.Size;
         }
 
-        public void Rebuild()
+        private void Rebuild()
         {
             var tmp = _container;
             _container = new Container<TKey, TValue>(_container.Size * 2 + 1);

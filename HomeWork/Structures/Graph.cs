@@ -3,14 +3,14 @@ using System.Linq;
 
 namespace HomeWork.Structures
 {
-    public class Grap
+    public class Graph
     {
-        public static IEnumerable<(Node node, int distance)> FindPaths(Node startNode)
+        public static IEnumerable<(GraphNode node, int distance)> FindPaths(GraphNode startGraphNode)
         {
-            var queue = new System.Collections.Generic.Queue<Node>();
-            var visited = new HashSet<Node>();
-            var result = new List<(Node, int)>();
-            queue.Enqueue(startNode);
+            var queue = new System.Collections.Generic.Queue<GraphNode>();
+            var visited = new HashSet<GraphNode>();
+            var result = new List<(GraphNode, int)>();
+            queue.Enqueue(startGraphNode);
             var distance = 1;
             while (queue.Count != 0)
             {
@@ -32,10 +32,10 @@ namespace HomeWork.Structures
             return result;
         }
 
-        public static IEnumerable<IEnumerable<Node>> FindConnectivityComponents(IList<Node> nodes)
+        public static IEnumerable<IEnumerable<GraphNode>> FindConnectivityComponents(IList<GraphNode> nodes)
         {
-            var visited = new HashSet<Node>();
-            var result = new List<List<Node>>();
+            var visited = new HashSet<GraphNode>();
+            var result = new List<List<GraphNode>>();
             while (true)
             {
                 var nextNode = nodes.FirstOrDefault(x => !visited.Contains(x));
@@ -48,51 +48,50 @@ namespace HomeWork.Structures
             return result;
         }
 
-        public static IList<Node> FindCycles(Node startNode)
+        public static IEnumerable<GraphNode> FindCycles(GraphNode startGraphNode)
         {
-            var visited = new HashSet<Node>();
-            var queue = new System.Collections.Generic.Stack<Node>();
-            queue.Push(startNode);
-            while (queue.Count != 0)
+            var visited = new HashSet<GraphNode>();
+            var nodesStack = new System.Collections.Generic.Stack<GraphNode>();
+            var ways = new Dictionary<GraphNode, GraphNode>();
+            nodesStack.Push(startGraphNode);
+            while (nodesStack.Count != 0)
             {
-                var node = queue.Peek();
-                if (visited.Contains(node))
+                var currentNode = nodesStack.Pop();
+                visited.Add(currentNode);
+                foreach (var node in currentNode.Edges)
                 {
-                    var list = new List<Node> { node };
-                    node = queue.Pop();
-                    var nextNode = queue.Pop();
-                    while (true)
-                    {
-                        list.Add(nextNode);
-                        if (nextNode == node)
-                            break;
-                        while (true)
-                        {
-                            var tmp = queue.Pop();
-                            if (tmp.Edges.Contains(nextNode))
-                            {
-                                nextNode = tmp;
-                                break;
-                            }
-                        }
-                    }
-
-                    return list;
+                    if (visited.Contains(node))
+                        return BuildPath(ways, currentNode, node);
+                    ways[node] = currentNode;
+                    nodesStack.Push(node);
                 }
-
-                visited.Add(node);
-                foreach (var incidentNode in node.Edges)
-                    queue.Push(incidentNode);
             }
 
             return null;
         }
 
-        public static IEnumerable<Node> BreadthSearch(Node startNode)
+        private static IEnumerable<GraphNode> BuildPath(
+            Dictionary<GraphNode, GraphNode> ways,
+            GraphNode startNode, 
+            GraphNode endNode)
         {
-            var visited = new HashSet<Node>();
-            var queue = new System.Collections.Generic.Queue<Node>();
-            queue.Enqueue(startNode);
+            var cyclePath = new List<GraphNode>();
+            var nextNode = startNode;
+            while (ways.ContainsKey(nextNode) && !nextNode.Equals(endNode))
+            {
+                cyclePath.Add(nextNode);
+                nextNode = ways[nextNode];
+            }
+            cyclePath.Add(nextNode);
+            cyclePath.Reverse();
+            return cyclePath;
+        }
+
+        public static IEnumerable<GraphNode> BreadthSearch(GraphNode startGraphNode)
+        {
+            var visited = new HashSet<GraphNode>();
+            var queue = new System.Collections.Generic.Queue<GraphNode>();
+            queue.Enqueue(startGraphNode);
             while (queue.Count != 0)
             {
                 var node = queue.Dequeue();
@@ -105,45 +104,81 @@ namespace HomeWork.Structures
             }
         }
 
-        public class Node
+    }
+
+    public class GraphNode
+    {
+        private readonly int Number;
+        private readonly IList<GraphNode> _edges;
+        public IEnumerable<GraphNode> Edges => _edges;
+
+        public GraphNode(int number)
         {
-            public readonly int Number;
-            public IList<Node> Edges;
+            Number = number;
+            _edges = new List<GraphNode>();
+        }
 
-            public Node(int number)
-            {
-                Number = number;
-                Edges = new List<Node>();
-            }
+        public void AddEdges(IEnumerable<GraphNode> nodes)
+        {
+            foreach (var node in nodes)
+                _edges.Add(node);
+        }
 
-            public void AddEdges(IEnumerable<Node> nodes)
-            {
-                foreach (var node in nodes)
-                    Edges.Add(node);
-            }
+        public void AddEdge(GraphNode node)
+        {
+            _edges.Add(node);
+        }
 
-            public override string ToString()
-            {
-                return Number.ToString();
-            }
+        public override string ToString()
+        {
+            return Number.ToString();
+        }
 
-            protected bool Equals(Node other)
-            {
-                return Number == other.Number;
-            }
+        protected bool Equals(GraphNode other)
+        {
+            return Number == other.Number;
+        }
 
-            public override bool Equals(object obj)
-            {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != this.GetType()) return false;
-                return Equals((Node)obj);
-            }
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((GraphNode)obj);
+        }
 
-            public override int GetHashCode()
-            {
-                return Number;
-            }
+        public override int GetHashCode()
+        {
+            return Number;
         }
     }
 }
+
+//var node = queue.Peek();
+//if (visited.Contains(node))
+//{
+//    var list = new List<GraphNode> { node };
+//    node = queue.Pop();
+//    var nextNode = queue.Pop();
+//    while (true)
+//    {
+//        list.Add(nextNode);
+//        if (nextNode.Equals(node))
+//            break;
+//        while (true)
+//        {
+//            var tmp = queue.Pop();
+//            if (tmp.Edges.Contains(nextNode))
+//            {
+//                nextNode = tmp;
+//                break;
+//            }
+//        }
+//    }
+
+//    return list;
+//}
+
+//visited.Add(node);
+//foreach (var incidentNode in node.Edges)
+//    queue.Push(incidentNode);
